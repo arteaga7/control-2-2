@@ -7,7 +7,7 @@ of the Monthly_Report
 from pathlib import Path
 import argparse
 from mod_2_2.monthly_report import read_xlsx, compare_col_content
-from mod_2_2.mail import read_msg, notify
+from mod_2_2.mail import read_msg, notify, print_mail
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -31,15 +31,18 @@ Por favor subir el Monthly Report con la estructura adecuada.<br><br>
 Saludos.\n"""
 missing_evidence = """Hola Equipo,<br><br>
 Por favor subir la evidencia faltante.<br><br>
-Saludos."""
+Saludos.\n"""
+mising_responsibles = """Hola Equipo,<br><br>
+Por favor subir el Monthly Report con los responsables completos.<br><br>
+Saludos.\n"""
 mismatch_sent_template = """Hola Equipo,<br><br>
 Por favor mandar un correo complementario a las personas que faltaron:<br><br>
 {df}
 <br><br>
-Saludos."""
-bot2_success = """Hola Equipo,<br><br>
+Saludos.\n"""
+c2_2_bot2_success = """Hola Equipo,<br><br>
 La evidencia se recibio con exito.<br><br>
-Saludos."""
+Saludos.\n"""
 # ----------------------------------
 
 
@@ -57,11 +60,27 @@ def main():
         notify("No hay correo de evidencia para evaluar.\nSe envia el sig. correo...\n\n", missing_evidence)
         return
 
+    df_na = df[df["Reponsible"].isna()]
+    if not df_na.empty:
+        print("Hay Responsables con valores nulos.\nSe envia el sig. correo...\n\n",
+              mising_responsibles)
+        df = df[df["Reponsible"].notna()]
+
     if len(mailto_report) > 0:
-        df = compare_col_content(df=df, col="Responsible",
+        df = compare_col_content(df=df, col="Reponsible",
                                  new_col="Enviado", mails=mailto_report)
         print("Personas responsables:")
-        print(df[["Responsible", "Enviado"]], "\n")
+        print(df[["Reponsible", "Enviado"]], "\n")
+        if df["Enviado"].all():
+            notify("Ejecución correcta. Se envia el sig. correo...\n\n",
+                   c2_2_bot2_success)
+        else:
+            df_not_sent = df[(df["Enviado"] == False)]
+            df_not_sent = df_not_sent[["Reponsible", "Enviado"]]
+            print_mail("\nSe envia el sig. correo...\n\n",
+                       df_not_sent, mismatch_sent_template)
+
+        return
 
 
 if __name__ == "__main__":
