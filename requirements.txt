@@ -3,3 +3,4 @@ openpyxl
 extract-msg
 requests
 python-dotenv
+pyinstaller

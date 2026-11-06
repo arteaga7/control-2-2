@@ -7,6 +7,7 @@ import html
 import requests
 import json
 import pandas as pd
+import os
 
 
 def extract_emails(texto: str) -> list[str]:
@@ -47,7 +48,12 @@ def read_msg(folder_path: Path, n_mails: int | None = None,
 def send_mail(body_mail: str) -> None:
     """Send email"""
     headers = {"Content-Type": "application/json"}
-    URL = "https://defaultf66fae025d36495bbfe078a6ff9f8e.6e.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/9560f13a31ba4795b346c4b0ae2df14f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ksORmCQP6YZcCPu2kkxxfA7v_hztHNaX8MJnaCcw1Bk"
+    URL = os.environ.get("PA_INBOX_URL")
+    if not URL:
+        raise RuntimeError(
+            "Falta PA_INBOX_URL en el archivo .env junto al .exe")
+    headers = {"Content-Type": "application/json"}
+
     json_file = json.dumps({
         "mode": "refresh",
         # "sas_uri": "https://dbstorageda09p930814.blob.core.windows.net/",
@@ -71,9 +77,9 @@ def notify(mensaje_log: str, correo_html: str):
     send_mail(correo_html)
 
 
-def print_mail(mensaje: str, df: pd.DataFrame, template: str):
+def print_mail(mensaje: str, df: pd.DataFrame, template: str, mes: str):
     """Print and send Dataframe with html format"""
     print(f"\n{mensaje}\n", df)
     mail = template.format(
-        df=df.to_html(index=False))
+        df=df.to_html(index=False), mes=mes)
     send_mail(mail)

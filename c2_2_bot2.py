@@ -2,21 +2,33 @@
 c2_2_bot2.py: Check if there is evidence in the folder 'Execution' and
 check if an email was sent to all the people responsible in the 'Responsable' column
 of the Monthly_Report
+Executable:
+uv run pyinstaller --onefile --name c2_2_bot2 --paths . --collect-all extract_msg c2_2_bot2.py
 """
 
+import sys
 from pathlib import Path
 import argparse
+from dotenv import load_dotenv
 from mod_2_2.monthly_report import read_xlsx, compare_col_content
 from mod_2_2.mail import read_msg, notify, print_mail
 
+# Carpeta real del .exe (o del .py si corres en desarrollo)
+if getattr(sys, "frozen", False):
+    PROJECT_DIR = Path(sys.executable).resolve().parent
+else:
+    PROJECT_DIR = Path(__file__).resolve().parent
 
-PROJECT_DIR = Path(__file__).resolve().parent
+load_dotenv(PROJECT_DIR / ".env")
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--month", default="10. Octubre")
-parser.add_argument("--unilever_path", type=Path, default=PROJECT_DIR)
+parser.add_argument("--unilever_path", type=Path,
+                    default=Path(r"C:\SharePoints"))
 args = parser.parse_args()
-MONTH = "10. Octubre"  # args.month
-UNILEVER_PATH = Path(r"C:\SharePoints")  # args.unilever_path
+
+MONTH = args.month
+UNILEVER_PATH = args.unilever_path
 
 FOLDER_PATH = (
     UNILEVER_PATH / "Unilever"
@@ -26,22 +38,24 @@ COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
 REPORT_FOLDER = Path(FOLDER_PATH) / MONTH / "Execution"
 
 # --------Mail content ------------
-missing_report = """Hola Equipo,<br><br> 
-Por favor subir el Monthly Report con la estructura adecuada.<br><br>
+missing_report = f"""Hola Equipo,<br><br> 
+Por favor subir el CHI Report con la estructura adecuada para el mes "{MONTH}" del control 2.2.<br><br>
 Saludos.\n"""
-missing_evidence = """Hola Equipo,<br><br>
-Por favor subir la evidencia faltante.<br><br>
+missing_evidence = f"""Hola Equipo,<br><br>
+Por favor subir la evidencia faltante para el mes "{MONTH}" del control 2.2.<br><br>
 Saludos.\n"""
-mising_responsibles = """Hola Equipo,<br><br>
-Por favor subir el Monthly Report con los responsables completos.<br><br>
+mising_responsibles = f"""Hola Equipo,<br><br>
+Por favor subir el CHI Report con los responsables completos para el mes "{MONTH}" del control 2.2.<br><br>
 Saludos.\n"""
 mismatch_sent_template = """Hola Equipo,<br><br>
 Por favor mandar un correo complementario a las personas que faltaron:<br><br>
 {df}
 <br><br>
+Para el mes "{mes}" del control 2.2.
+<br><br>
 Saludos.\n"""
-c2_2_bot2_success = """Hola Equipo,<br><br>
-La evidencia se recibio con exito.<br><br>
+c2_2_bot2_success = f"""Hola Equipo,<br><br>
+La evidencia se recibio con exito para el mes "{MONTH}" del control 2.2.<br><br>
 Saludos.\n"""
 # ----------------------------------
 
@@ -78,7 +92,7 @@ def main():
             df_not_sent = df[(df["Enviado"] == False)]
             df_not_sent = df_not_sent[["Reponsible", "Enviado"]]
             print_mail("\nSe envia el sig. correo...\n\n",
-                       df_not_sent, mismatch_sent_template)
+                       df_not_sent, mismatch_sent_template, MONTH)
 
         return
 
