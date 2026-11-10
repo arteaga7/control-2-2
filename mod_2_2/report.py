@@ -3,10 +3,14 @@ from pathlib import Path
 import pandas as pd
 
 
-def get_filenames(folder_path: Path, extension: str) -> list[str]:
+def get_filenames(folder_path: Path, extension: str, name: str | None) -> list[str]:
     """Regresa los nombres de todos los archivos que coincidan
-    con la extensión."""
-    return [file.name for file in folder_path.glob(extension) if file.is_file()]
+    con la extensión y, si name no es None, que contengan name en su nombre."""
+    return [
+        file.name
+        for file in folder_path.glob(extension)
+        if file.is_file() and (name is None or name.lower() in file.name.lower())
+    ]
 
 
 def read_report(file_path: str | Path, cols: list[str]) -> pd.DataFrame:
@@ -15,7 +19,7 @@ def read_report(file_path: str | Path, cols: list[str]) -> pd.DataFrame:
     df = pd.DataFrame()
     if not file_path.is_file():
         raise FileNotFoundError(
-            f"No se encontró el Monthly Report: {file_path}"
+            f"No se encontró el Report: {file_path}"
         )
     try:
         df = pd.read_excel(
@@ -32,9 +36,9 @@ def read_report(file_path: str | Path, cols: list[str]) -> pd.DataFrame:
     return df
 
 
-def read_xlsx(folder_path: Path, cols: list[str]) -> pd.DataFrame:
+def read_xlsx(folder_path: Path, cols: list[str], name: str) -> pd.DataFrame:
     """Read the firts xlsm file, it should be only one."""
-    xlsx_name = get_filenames(folder_path, extension="*.xlsx")
+    xlsx_name = get_filenames(folder_path, extension="*.xlsx", name=name)
     if len(xlsx_name) > 0:
         xlsx_name = xlsx_name[0]
     else:
@@ -51,5 +55,6 @@ def compare_col_content(df: pd.DataFrame, col: str, new_col: str,
                         mails: list[str]) -> pd.DataFrame:
     """Compare content in column "col" with "mails and create a new column"""
     df = df.copy()
+    df[col] = df[col].str.lower()
     df[new_col] = df[col].isin(mails)
     return df

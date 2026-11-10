@@ -1,7 +1,7 @@
 # mail.py
 from pathlib import Path
 import extract_msg
-from mod_2_2.monthly_report import get_filenames
+from mod_2_2.report import get_filenames
 import re
 import html
 import requests
@@ -15,7 +15,7 @@ def extract_emails(texto: str) -> list[str]:
     # convierte &lt; &gt; en < >, por si vienen escapados
     texto = html.unescape(texto)
     patron = re.compile(r"<([^<>]+)>")
-    return [m.strip() for m in patron.findall(texto)]
+    return [m.strip().lower() for m in patron.findall(texto)]
 
 
 def read_msg(folder_path: Path, n_mails: int | None = None,
@@ -24,7 +24,7 @@ def read_msg(folder_path: Path, n_mails: int | None = None,
     Extrae todas las direcciones de correo de la propiedad indicada
     ("to", "cc" o "sender") de los archivos .msg.
     """
-    msg_names = get_filenames(folder_path, extension)
+    msg_names = get_filenames(folder_path, extension, None)
     if n_mails is not None:
         msg_names = msg_names[:n_mails]
 
@@ -61,8 +61,8 @@ def send_mail(body_mail: str) -> None:
         # "site": "https://unilever.sharepoint.com/sites/SKY_CE",
         # "sharepoint_path": "/Shared Documents/CEX SILVER/CASA LEY/",
         # "file_name": "Flujo_Casa_Ley.xlsx",
-        "email": "Antonio.Arteaga@Unilever.com",
-        "cc": "",
+        "email": "Bulmaro.Espinoza@unilever.com",
+        "cc": "Antonio.Arteaga@Unilever.com",
         "subject": "Control 2.2 - Pruebita BOT",
         "body": body_mail
     })
@@ -77,9 +77,9 @@ def notify(mensaje_log: str, correo_html: str):
     send_mail(correo_html)
 
 
-def print_mail(mensaje: str, df: pd.DataFrame, template: str, mes: str):
+def print_mail(mensaje: str, df: pd.DataFrame, template: str, mes: str, control: str):
     """Print and send Dataframe with html format"""
     print(f"\n{mensaje}\n", df)
     mail = template.format(
-        df=df.to_html(index=False), mes=mes)
+        df=df.to_html(index=False), mes=mes, control=control)
     send_mail(mail)
