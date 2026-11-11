@@ -28,11 +28,10 @@ parser.add_argument("--unilever_path", type=Path,
 args = parser.parse_args()
 
 MONTH = args.month
-UNILEVER_PATH = r"C:\SharePoints\Unilever\IOPs Control Documentos Nuevo - Deliver\OTB C3.2"
+# UNILEVER_PATH = r"C:\SharePoints\Unilever\IOPs Control Documentos Nuevo - Deliver\OTB C3.2"
 UNILEVER_PATH = args.unilever_path
 CONTROL = UNILEVER_PATH.name[-3:]
 print(f"\nSe ejecuta control {CONTROL}...\n")
-
 if CONTROL == "3.2":
     COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
     REPORT_FOLDER = Path(UNILEVER_PATH) / MONTH / "1. Execution"
