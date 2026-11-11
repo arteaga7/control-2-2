@@ -7,7 +7,7 @@ uv run pyinstaller --onefile --name bot4 --paths . --collect-all extract_msg bot
 import sys
 from pathlib import Path
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import pandas as pd
 from mod_2.report import read_xlsx, compare_col_content
@@ -49,11 +49,7 @@ else:
 log_file = UNILEVER_PATH / f"{CONTROL}_logs.txt"
 CAPGEMINI_FOLDER_PATH = UNILEVER_PATH / "Unilever" / "SKY_CE - emails_capgemini"
 # --------Mail content ------------
-success_template = """Hola Equipo,<br><br>
-Control 5.2 correcto para:<br><br>
-{df}
-<br><br>
-Saludos."""
+success_template = f"""Control "{CONTROL}" completo para el mes "{MONTH}"."""
 # ----------------------------------
 
 
@@ -88,11 +84,23 @@ def main():
               "o si hizo modificaciones recientemente, espere unos minutos y vuelva a intentar.")
         return
 
+    df_time = pd.read_csv(
+        log_file,
+        sep="\t",
+        header=None,
+        names=["Control", "Bot", "Fecha"],
+        parse_dates=["Fecha"],
+    )
+    last_exec = df_time.loc[df_time["Bot"] == "Bot2", "Fecha"].max()
+    if not (datetime.now() > last_exec + timedelta(days=2)):
+        print("El Bot2 se ejecuto recientemente (hace 2 dias o menos), entonces, espere 2 dias mas para ejecutar Bot4.")
+        return
+
     mailto_report = read_msg(folder_path=REPORT_FOLDER, n_mails=1,
                              extension="*.msg", property="to")
     if len(mailto_report) == 0:
         print(
-            f"No hay evidencia en la carpeta {REPORT_FOLDER}. Ejecute 'automatizacion2.bat' para mandar correo correspondiente.")
+            f"No hay evidencia en la carpeta {REPORT_FOLDER}. Ejecute 'automatizacion2.bat' para mandar el correo correspondiente.")
         return
 
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
