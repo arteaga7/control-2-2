@@ -1,7 +1,6 @@
 """
-bot2.py: Check if there is evidence in the corresponding folder and
-check if an email was sent to all the people responsible in the 'Responsable' column
-of the Report
+bot2.py: Check if there is evidence in the corresponding folder and check if an email was sent
+to all the people responsible in the 'Responsable' column of the Report
 Executable:
 uv run pyinstaller --onefile --name bot2 --paths . --collect-all extract_msg bot2.py
 """
@@ -9,6 +8,7 @@ uv run pyinstaller --onefile --name bot2 --paths . --collect-all extract_msg bot
 import sys
 from pathlib import Path
 import argparse
+from datetime import datetime
 from dotenv import load_dotenv
 from mod_2.report import read_xlsx, compare_col_content
 from mod_2.mail import read_msg, notify, print_mail
@@ -30,19 +30,20 @@ args = parser.parse_args()
 MONTH = args.month
 # UNILEVER_PATH = r"C:\SharePoints\Unilever\IOPs Control Documentos Nuevo - Deliver\OTB C3.2"
 UNILEVER_PATH = args.unilever_path
-CONTROL = UNILEVER_PATH.name[-3:]
+CONTROL = Path(UNILEVER_PATH).name
 print(f"\nSe ejecuta control {CONTROL}...\n")
-if CONTROL == "3.2":
+
+REPORT_FOLDER = Path(UNILEVER_PATH) / MONTH / "1. Execution"
+if CONTROL == "OTB C3.2":
     COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
-    REPORT_FOLDER = Path(UNILEVER_PATH) / MONTH / "1. Execution"
     REPORT_NAME = "Monthly"
     SHEET_NAME = "Rep. Auditoria"
 else:
     COLS_REPORT = ["Reponsable", "Approver", "Justificacion", "Director"]
-    REPORT_FOLDER = Path(UNILEVER_PATH) / MONTH / "1. CHI Report + Request"
     REPORT_NAME = "CHI"
     SHEET_NAME = "Reporte"
 
+log_file = UNILEVER_PATH / f"{CONTROL}_logs.txt"
 # --------Mail content ------------
 saludo = "Hola Equipo,<br><br>\n"
 despedida = "Saludos.\n"
@@ -92,21 +93,26 @@ def main():
 
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
     df_na = df[df[COLS_REPORT[0]].isna()]
-    if not df_na.empty and CONTROL == "3.2":
+    if not df_na.empty and CONTROL == "OTB C3.2":
         print(
             f"Hay Responsables con valores nulos.{nota}", mising_responsibles)
         df = df[df[COLS_REPORT[0]].notna()]
 
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Enviado", mails=mailto_report)
-    print("Personas responsables:")
-    print(df[[COLS_REPORT[0], "Enviado"]], "\n")
+
+    print("Personas responsables:", df[[COLS_REPORT[0], "Enviado"]], "\n")
     if df["Enviado"].all():
         notify(f"Ejecución correcta.{nota}", bot2_success)
     else:
-        df_not_sent = df[(df["Enviado"] == False)]
-        df_not_sent = df_not_sent[[COLS_REPORT[0], "Enviado"]]
+        df_not_sent = df.loc[df["Enviado"] == False,
+                             [COLS_REPORT[0], "Enviado"]]
         print_mail(nota, df_not_sent, mismatch_sent_template, MONTH, CONTROL)
+
+    with log_file.open("a", encoding="utf-8") as f:
+        f.write(f"{CONTROL}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
+
+    print(f"\nEl control {CONTROL} se ejecuto exitosamente!\n")
 
 
 if __name__ == "__main__":
