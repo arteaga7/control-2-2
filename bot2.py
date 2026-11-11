@@ -28,12 +28,12 @@ parser.add_argument("--unilever_path", type=Path,
 args = parser.parse_args()
 
 MONTH = args.month
-# UNILEVER_PATH = r"C:\SharePoints\Unilever\IOPs Control Documentos Nuevo - Deliver\OTB C3.2"
 UNILEVER_PATH = args.unilever_path
 CONTROL = Path(UNILEVER_PATH).name
-print(f"\nSe ejecuta control {CONTROL}...\n")
-
+BOT = "Bot2"
+print(f"\nSe ejecuta {BOT} de control {CONTROL}...\n")
 REPORT_FOLDER = Path(UNILEVER_PATH) / MONTH / "1. Execution"
+
 if CONTROL == "OTB C3.2":
     COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
     REPORT_NAME = "Monthly"
@@ -110,9 +110,9 @@ def main():
         print_mail(nota, df_not_sent, mismatch_sent_template, MONTH, CONTROL)
 
     with log_file.open("a", encoding="utf-8") as f:
-        f.write(f"{CONTROL}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
+        f.write(f"{CONTROL}\t{BOT}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
 
-    print(f"\nEl control {CONTROL} se ejecuto exitosamente!\n")
+    print(f"\nEl control {CONTROL} ({BOT}) se ejecuto exitosamente!\n")
 
 
 if __name__ == "__main__":
