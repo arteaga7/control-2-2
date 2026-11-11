@@ -43,33 +43,28 @@ def read_msg(folder_path: Path, n_mails: int | None = None,
     return addresses
 
 
-def send_mail(body_mail: str) -> None:
+def send_mail(body_mail: str, control: str) -> None:
     """Send email"""
-    URL = os.environ.get("INBOX_URL")
+    URL = os.environ.get("EMAIL_URL")
     if not URL:
         raise RuntimeError(
             "Falta INBOX_URL en el archivo .env junto al .exe")
     headers = {"Content-Type": "application/json"}
     json_file = json.dumps({
         "mode": "refresh",
-        # "sas_uri": "https://dbstorageda09p930814.blob.core.windows.net/",
-        # "blob_path": "unilever/FillRate/Flujo_Casa_Ley.xlsx",
-        # "site": "https://unilever.sharepoint.com/sites/SKY_CE",
-        # "sharepoint_path": "/Shared Documents/CEX SILVER/CASA LEY/",
-        # "file_name": "Flujo_Casa_Ley.xlsx",
         "email": "Bulmaro.Espinoza@unilever.com",
         "cc": "Antonio.Arteaga@Unilever.com",
-        "subject": "Control 2.2 - Pruebita BOT",
+        "subject": f"Control {control} - Pruebita BOT",
         "body": body_mail
     })
     response = requests.post(URL, data=json_file,  headers=headers, timeout=30)
-    print(response.status_code, response.text)
+    print("\nSend mail status code: ", response.status_code, response.text)
 
 
-def notify(mensaje_log: str, correo_html: str):
+def notify(mensaje_log: str, correo_html: str, control: str):
     """Imprime un mensaje de log y envía el correo correspondiente."""
     print(mensaje_log + correo_html)
-    send_mail(correo_html)
+    send_mail(correo_html, control)
 
 
 def print_mail(mensaje: str, df: pd.DataFrame, template: str, mes: str, control: str):
@@ -77,4 +72,4 @@ def print_mail(mensaje: str, df: pd.DataFrame, template: str, mes: str, control:
     print(f"\n{mensaje}\n", df)
     mail = template.format(
         df=df.to_html(index=False), mes=mes, control=control)
-    send_mail(mail)
+    send_mail(mail, control)

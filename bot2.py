@@ -39,7 +39,7 @@ if CONTROL == "OTB C3.2":
     REPORT_NAME = "Monthly"
     SHEET_NAME = "Rep. Auditoria"
 else:
-    COLS_REPORT = ["Reponsable", "Approver", "Justificacion", "Director"]
+    COLS_REPORT = ["Reponsable", "Approver", "Justificacion"]
     REPORT_NAME = "CHI"
     SHEET_NAME = "Reporte"
 
@@ -80,7 +80,7 @@ def main():
     df = read_xlsx(REPORT_FOLDER, COLS_REPORT, REPORT_NAME, SHEET_NAME)
     if df.empty:
         notify(
-            f"No hay {REPORT_NAME} Report.{nota}", missing_report)
+            f"No hay {REPORT_NAME} Report.{nota}", missing_report, CONTROL)
         return
 
     mailto_report = read_msg(folder_path=REPORT_FOLDER, n_mails=1,
@@ -88,7 +88,7 @@ def main():
 
     if len(mailto_report) == 0:
         notify(
-            f"No hay correo de evidencia para evaluar.{nota}", missing_evidence)
+            f"No hay correo de evidencia para evaluar.{nota}", missing_evidence, CONTROL)
         return
 
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
@@ -101,9 +101,9 @@ def main():
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Enviado", mails=mailto_report)
 
-    print("Personas responsables:", df[[COLS_REPORT[0], "Enviado"]], "\n")
+    print("Personas responsables:\n", df[[COLS_REPORT[0], "Enviado"]], "\n")
     if df["Enviado"].all():
-        notify(f"Ejecución correcta.{nota}", bot2_success)
+        notify(f"Ejecución correcta.{nota}", bot2_success, CONTROL)
     else:
         df_not_sent = df.loc[df["Enviado"] == False,
                              [COLS_REPORT[0], "Enviado"]]
@@ -112,7 +112,7 @@ def main():
     with log_file.open("a", encoding="utf-8") as f:
         f.write(f"{CONTROL}\t{BOT}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
 
-    print(f"\nEl control {CONTROL} ({BOT}) se ejecuto exitosamente!\n")
+    print(f"\nEl {BOT} del control {CONTROL} se ejecuto exitosamente!\n")
 
 
 if __name__ == "__main__":
