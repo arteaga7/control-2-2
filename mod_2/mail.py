@@ -20,10 +20,8 @@ def extract_emails(texto: str) -> list[str]:
 
 def read_msg(folder_path: Path, n_mails: int | None = None,
              extension: str = "*.msg", property: str = "to") -> list[str]:
-    """
-    Extrae todas las direcciones de correo de la propiedad indicada
-    ("to", "cc" o "sender") de los archivos .msg.
-    """
+    """Extrae todas las direcciones de correo de la propiedad indicada
+    ("to", "cc" o "sender") de los archivos .msg."""
     msg_names = get_files(folder_path, extension, None)
     if n_mails is not None:
         msg_names = msg_names[:n_mails]

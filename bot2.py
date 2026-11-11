@@ -68,6 +68,14 @@ def build_mail(cuerpo: str) -> str:
 
 
 def main():
+    month_folder = UNILEVER_PATH / MONTH
+    if not month_folder.is_dir():
+        print(f"[ERROR] La carpeta del mes no existe: {month_folder}")
+        sys.exit(1)
+    if not REPORT_FOLDER.is_dir():
+        print(f"[ERROR] La carpeta del reporte no existe: {REPORT_FOLDER}")
+        sys.exit(1)
+
     df = read_xlsx(REPORT_FOLDER, COLS_REPORT, REPORT_NAME, SHEET_NAME)
     if df.empty:
         notify(
@@ -94,7 +102,7 @@ def main():
     print("Personas responsables:")
     print(df[[COLS_REPORT[0], "Enviado"]], "\n")
     if df["Enviado"].all():
-        notify(f"Ejecución correcta.{nota}",  bot2_success)
+        notify(f"Ejecución correcta.{nota}", bot2_success)
     else:
         df_not_sent = df[(df["Enviado"] == False)]
         df_not_sent = df_not_sent[[COLS_REPORT[0], "Enviado"]]
