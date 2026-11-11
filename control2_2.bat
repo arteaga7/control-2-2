@@ -3,7 +3,7 @@ setlocal
 
 REM ---- Valores por defecto ----
 set "DEF_MONTH=10. Octubre"
-set "DEF_PATH=C:\SharePoints"
+set "DEF_PATH=C:\SharePoints\Unilever\IOPs Control Documentos Nuevo - Deliver\OTB C3.2"
 
 REM ---- Pedir argumentos ----
 set "MONTH="
@@ -11,7 +11,7 @@ set /p "MONTH=Mes a revisar [%DEF_MONTH%]: "
 if "%MONTH%"=="" set "MONTH=%DEF_MONTH%"
 
 set "UNILEVER_PATH="
-set /p "UNILEVER_PATH=Ruta de SharePoint [%DEF_PATH%]: "
+set /p "UNILEVER_PATH=Ruta de SharePoint y control [%DEF_PATH%]: "
 if "%UNILEVER_PATH%"=="" set "UNILEVER_PATH=%DEF_PATH%"
 
 REM ---- Limpiar comillas y "\" final ----
@@ -32,7 +32,7 @@ echo   --month         "%MONTH%"
 echo   --unilever_path "%UNILEVER_PATH%"
 echo.
 
-"%~dp0c2_2_bot2.exe" --month "%MONTH%" --unilever_path "%UNILEVER_PATH%"
+"%~dp0bot2.exe" --month "%MONTH%" --unilever_path "%UNILEVER_PATH%"
 
 echo.
 pause
