@@ -54,6 +54,7 @@ def extraer_from_carpeta(folder_path: str | Path) -> list[str]:
 
 def post_inbox():
     """Post API Rest to trigger PowerAutomate to check inbox"""
+    print("Checando bandeja de entrada...")
     url = os.getenv("INBOX_URL")
     if not url:
         raise RuntimeError(f"No se encontró INBOX_URL en {ENV_PATH}")
@@ -68,7 +69,7 @@ def post_inbox():
             f"Power Automate fallo al checar la bandeja de entrada: "
             f"{response.status_code} - {response.text}"
         )
-    print("Esperamos un minuto a que el flujo de Power Automate se ejecute...")
+    print("Esperamos un minuto a que se ejecute el flujo de Power Automate para revisar inbox...")
     time.sleep(60)
 
 

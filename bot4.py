@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 import pandas as pd
 from mod_2.report import read_xlsx, compare_col_content
 from mod_2.mail import read_msg
-from mod_4.inbox import post_inbox
+from mod_4.inbox import post_inbox, extraer_from_carpeta
 
 # Carpeta real del .exe (o del .py si corres en desarrollo)
 if getattr(sys, "frozen", False):
@@ -26,10 +26,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--month", default="10. Octubre")
 parser.add_argument("--unilever_path", type=Path,
                     default=Path(r"C:\SharePoints\Unilever\IOPs Control Documentos Nuevo - Deliver\OTB C3.2"))
+parser.add_argument("--capgemini_path", type=Path,
+                    default=Path(r"C:\SharePoints\Unilever\SKY_CE - emails_capgemini"))
 args = parser.parse_args()
 
 MONTH = args.month
 UNILEVER_PATH = args.unilever_path
+CAPGEMINI_FOLDER_PATH = args.capgemini_path
 CONTROL = Path(UNILEVER_PATH).name
 BOT = "Bot4"
 print(f"\nSe ejecuta {BOT} de control {CONTROL}...\n")
@@ -42,12 +45,12 @@ if CONTROL == "OTB C3.2":
     REPORT_NAME = "Monthly"
     SHEET_NAME = "Rep. Auditoria"
 else:
-    COLS_REPORT = ["Responsable", "Approver", "Justificación"]
+    COLS_REPORT = ["Responsable", "Justification"]
     REPORT_NAME = "CHI"
     SHEET_NAME = "Reporte"
 
 log_file = UNILEVER_PATH / f"{CONTROL}_logs.txt"
-CAPGEMINI_FOLDER_PATH = UNILEVER_PATH / "Unilever" / "SKY_CE - emails_capgemini"
+
 # --------Mail content ------------
 success_template = f"""Control "{CONTROL}" completo para el mes "{MONTH}"."""
 # ----------------------------------
@@ -61,11 +64,26 @@ def bot4(df: pd.DataFrame):
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Feedback", mails=from_justification)
     print("Personas que respondieron (mandaron email de justificacion):")
-    print(df[[COLS_REPORT[0], "Feedback"]], "\n")
+    # print(df[[COLS_REPORT[0], "Feedback"]], "\n")
+    # df_feed = df[df["Feedback"] == True]
+    df_no_feed = df[df["Feedback"] == False]
 
-    print("Verificar bandeja de entrada para justificaciones.")
-    post_inbox()
-    # check_inbox_sharepoint(COLS_REPORT[0], WORKING_DIR)
+    if not df_no_feed.empty:
+        # post_inbox()
+        print("Ya se actualizaron los mails")
+        # remitentes = extraer_from_carpeta(CAPGEMINI_FOLDER_PATH)
+        remitentes = ['Lorena.Espindola@unilever.com',
+                      'colatam.automations@unilever.com', 'noreply_unilever@engage.mail.microsoft']
+        print(remitentes)
+        df_no_feed = compare_col_content(df=df_no_feed, col=COLS_REPORT[0],
+                                         new_col="Inbox", mails=remitentes)
+        df_inbox = df_no_feed.loc[df_no_feed["Inbox"] == True,
+                                  [COLS_REPORT[0], "Feedback", "Inbox"]]
+        df_no_inbox = df_no_feed.loc[df_no_feed["Inbox"] == False,
+                                     [COLS_REPORT[0], "Feedback", "Inbox"]]
+        print(f"df_inbox:\n{df_inbox}")
+        print(f"df_no_inbox:\n{df_no_inbox}")
+
     return
 
 
@@ -85,15 +103,13 @@ def main():
         return
 
     df_time = pd.read_csv(
-        log_file,
-        sep="\t",
-        header=None,
+        log_file, sep="\t", header=None,
         names=["Control", "Bot", "Fecha"],
         parse_dates=["Fecha"],
     )
     last_exec = df_time.loc[df_time["Bot"] == "Bot2", "Fecha"].max()
-    if not (datetime.now() > last_exec + timedelta(days=2)):
-        print("El Bot2 se ejecuto recientemente (hace 2 dias o menos), entonces, espere 2 dias mas para ejecutar Bot4.")
+    if not (datetime.now() > last_exec + timedelta(days=0)):
+        print("El Bot2 se ejecuto recientemente (menos de 2 dias), espere 2 dias mas para ejecutar Bot4.")
         return
 
     mailto_report = read_msg(folder_path=REPORT_FOLDER, n_mails=1,

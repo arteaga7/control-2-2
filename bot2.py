@@ -39,7 +39,7 @@ if CONTROL == "OTB C3.2":
     REPORT_NAME = "Monthly"
     SHEET_NAME = "Rep. Auditoria"
 else:
-    COLS_REPORT = ["Reponsable", "Approver", "Justificacion"]
+    COLS_REPORT = ["Responsable", "Justification"]
     REPORT_NAME = "CHI"
     SHEET_NAME = "Reporte"
 
