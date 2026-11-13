@@ -52,8 +52,8 @@ else:
 log_file = UNILEVER_PATH / f"{CONTROL}_logs.txt"
 
 # --------Mail content ------------
-saludo = "Hola Equipo,<br><br>\n"
-despedida = "Saludos.\n"
+saludo = "Hola Equipo,<br><br>"
+despedida = "<br><br>Saludos."
 missing_justification_mails = """Hola Equipo,<br><br>
 Por favor subir al SharePoint los mails de justificacion faltantes:<br><br>
 {df}
@@ -69,8 +69,7 @@ Para el mes "{mes}" del control "{control}".<br><br>
 Por favor enviar email a sus respectivos WL2 (Line Manager).
 <br><br>
 Saludos."""
-success_template = f"""{saludo}Control "{CONTROL}" completo para el mes "{MONTH}"\n{despedida}."""
-nota = "\nSe envia el sig. correo...\n\n"
+success_template = f"""{saludo}Control "{CONTROL}" completo para el mes "{MONTH}"{despedida}."""
 # ----------------------------------
 
 
@@ -89,9 +88,9 @@ def df_no_feed_not_empty(df_no_feed: pd.DataFrame):
     df_no_inbox = df_no_feed.loc[df_no_feed["Inbox"] == False,
                                  [COLS_REPORT[0], "Inbox", COLS_REPORT[2]]]
     if not df_inbox.empty:
-        print_mail(nota, df_inbox, missing_justification_mails, MONTH, CONTROL)
+        print_mail(df_inbox, missing_justification_mails, MONTH, CONTROL)
     if not df_no_inbox.empty:
-        print_mail(nota, df_no_inbox, no_justification_mails, MONTH, CONTROL)
+        print_mail(df_no_inbox, no_justification_mails, MONTH, CONTROL)
 
 
 def bot4(df: pd.DataFrame):

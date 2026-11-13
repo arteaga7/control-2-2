@@ -9,6 +9,8 @@ import json
 import pandas as pd
 import os
 
+nota = "\n\nSe envia el sig. correo...\n\n"
+
 
 def extract_emails(texto: str) -> list[str]:
     """Extrae el contenido dentro de <...> del texto y retorna una lista."""
@@ -63,15 +65,15 @@ def send_mail(body_mail: str, control: str) -> None:
 
 def notify(mensaje_log: str, correo_html: str, control: str):
     """Imprime un mensaje de log y envía el correo correspondiente."""
-    print(mensaje_log + correo_html)
+    print(mensaje_log + correo_html.replace("<br><br>", "\n"))
     # send_mail(correo_html, control)
 
 
-def print_mail(mensaje: str, df: pd.DataFrame, template: str, mes: str, control: str):
+def print_mail(df: pd.DataFrame, template: str, mes: str, control: str):
     """Print and send Dataframe with html format"""
     mail_terminal = template.replace("<br><br>", "\n").format(
         df=df.to_string(index=False), mes=mes, control=control)
-    print(f"\n{mensaje}\n{mail_terminal}")
+    print(f"{nota}{mail_terminal}")
     mail = template.format(
         df=df.to_html(index=False), mes=mes, control=control)
     # send_mail(mail, control)
