@@ -64,12 +64,14 @@ def send_mail(body_mail: str, control: str) -> None:
 def notify(mensaje_log: str, correo_html: str, control: str):
     """Imprime un mensaje de log y envía el correo correspondiente."""
     print(mensaje_log + correo_html)
-    send_mail(correo_html, control)
+    # send_mail(correo_html, control)
 
 
 def print_mail(mensaje: str, df: pd.DataFrame, template: str, mes: str, control: str):
     """Print and send Dataframe with html format"""
-    print(f"\n{mensaje}\n", df)
+    mail_terminal = template.replace("<br><br>", "\n").format(
+        df=df.to_string(index=False), mes=mes, control=control)
+    print(f"\n{mensaje}\n{mail_terminal}")
     mail = template.format(
         df=df.to_html(index=False), mes=mes, control=control)
-    send_mail(mail, control)
+    # send_mail(mail, control)

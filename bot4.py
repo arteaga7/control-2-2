@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import pandas as pd
 from mod_2.report import read_xlsx, compare_col_content
-from mod_2.mail import read_msg
+from mod_2.mail import read_msg, print_mail
 from mod_4.inbox import post_inbox, extraer_from_carpeta
 
 # Carpeta real del .exe (o del .py si corres en desarrollo)
@@ -52,8 +52,46 @@ else:
 log_file = UNILEVER_PATH / f"{CONTROL}_logs.txt"
 
 # --------Mail content ------------
-success_template = f"""Control "{CONTROL}" completo para el mes "{MONTH}"."""
+saludo = "Hola Equipo,<br><br>\n"
+despedida = "Saludos.\n"
+missing_justification_mails = """Hola Equipo,<br><br>
+Por favor subir al SharePoint los mails de justificacion faltantes:<br><br>
+{df}
+<br><br>
+Para el mes "{mes}" del control "{control}".
+<br><br>
+Saludos."""
+no_justification_mails = """Hola Equipo,<br><br>
+Las siguientes personas no enviaron sus emails de justificacion:<br><br>
+{df}
+<br><br>
+Para el mes "{mes}" del control "{control}".<br><br>
+Por favor enviar email a sus respectivos WL2 (Line Manager).
+<br><br>
+Saludos."""
+success_template = f"""{saludo}Control "{CONTROL}" completo para el mes "{MONTH}"\n{despedida}."""
+nota = "\nSe envia el sig. correo...\n\n"
 # ----------------------------------
+
+
+def df_no_feed_not_empty(df_no_feed: pd.DataFrame):
+    """This code is executed if df_no_feed is not empty."""
+    # post_inbox()
+    print("Ya se actualizaron los mails")
+    # remitentes = extraer_from_carpeta(CAPGEMINI_FOLDER_PATH)
+    remitentes = ['Lorena.Espindola@unilever.com',
+                  'vignesh.k@unilever.com', 'sivakumar.buraga2@unilever.com']
+    print(remitentes)
+    df_no_feed = compare_col_content(df=df_no_feed, col=COLS_REPORT[0],
+                                     new_col="Inbox", mails=remitentes)
+    df_inbox = df_no_feed.loc[df_no_feed["Inbox"] == True,
+                              [COLS_REPORT[0], "Inbox"]]
+    df_no_inbox = df_no_feed.loc[df_no_feed["Inbox"] == False,
+                                 [COLS_REPORT[0], "Inbox", COLS_REPORT[2]]]
+    if not df_inbox.empty:
+        print_mail(nota, df_inbox, missing_justification_mails, MONTH, CONTROL)
+    if not df_no_inbox.empty:
+        print_mail(nota, df_no_inbox, no_justification_mails, MONTH, CONTROL)
 
 
 def bot4(df: pd.DataFrame):
@@ -64,25 +102,12 @@ def bot4(df: pd.DataFrame):
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Feedback", mails=from_justification)
     print("Personas que respondieron (mandaron email de justificacion):")
-    # print(df[[COLS_REPORT[0], "Feedback"]], "\n")
+    print(df[[COLS_REPORT[0], "Feedback"]], "\n")
     # df_feed = df[df["Feedback"] == True]
     df_no_feed = df[df["Feedback"] == False]
 
     if not df_no_feed.empty:
-        # post_inbox()
-        print("Ya se actualizaron los mails")
-        # remitentes = extraer_from_carpeta(CAPGEMINI_FOLDER_PATH)
-        remitentes = ['Lorena.Espindola@unilever.com',
-                      'colatam.automations@unilever.com', 'noreply_unilever@engage.mail.microsoft']
-        print(remitentes)
-        df_no_feed = compare_col_content(df=df_no_feed, col=COLS_REPORT[0],
-                                         new_col="Inbox", mails=remitentes)
-        df_inbox = df_no_feed.loc[df_no_feed["Inbox"] == True,
-                                  [COLS_REPORT[0], "Feedback", "Inbox"]]
-        df_no_inbox = df_no_feed.loc[df_no_feed["Inbox"] == False,
-                                     [COLS_REPORT[0], "Feedback", "Inbox"]]
-        print(f"df_inbox:\n{df_inbox}")
-        print(f"df_no_inbox:\n{df_no_inbox}")
+        df_no_feed_not_empty(df_no_feed)
 
     return
 
