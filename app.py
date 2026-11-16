@@ -8,7 +8,10 @@ import tkinter as tk
 from tkinter import filedialog
 
 page_title = "Capgemini-Bots"
-img = Image.open("./images/unilever.png")
+img_path = Path(__file__).resolve().parent
+img_path = img_path / "images" / "unilever.png"
+
+img = Image.open(img_path)
 st.set_page_config(page_title=page_title, layout="wide",
                    page_icon=img)
 
@@ -42,22 +45,18 @@ st.write(st.session_state.get("folder", "No folder selected"))
 st.header("Select", divider="gray")
 col1, col2, col3 = st.columns(3)
 with col1:
-    selectbox_option = st.selectbox(
-        label="Control",
-        options=['C2.2', 'C3.2', 'C5.2']
+    control = st.selectbox(
+        label="Control", options=['OTB C2.2', 'OTB C3.2', 'OTB C5.2']
     )
 with col2:
-    selectbox_option = st.selectbox(
-        label="Month",
-        options=['09. Sep', '10. Oct', '11. Nov']
+    month = st.selectbox(
+        label="Month", options=['09. Sep', '10. Oct', '11. Nov']
     )
 with col3:
-    selectbox_option = st.selectbox(
-        label="Bot",
-        options=['Bot1', 'Bot2', 'Bot4', 'Bot6']
+    bot = st.selectbox(
+        label="Bot", options=['Bot1', 'Bot2', 'Bot4', 'Bot6']
     )
 
 # Image -----------------------------------------
 st.header("Image", divider="blue")
-img1 = Image.open("./images/unilever.png")
-st.image(img1, use_container_width=True, caption="Image 1")
+st.image(img, width="stretch", caption="Image 1")
