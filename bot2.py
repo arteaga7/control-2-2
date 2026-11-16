@@ -22,17 +22,22 @@ else:
 load_dotenv(PROJECT_DIR / ".env")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--month", default="10. Octubre")
 parser.add_argument("--unilever_path", type=Path,
-                    default=Path(r"C:\SharePoints\Unilever\IOPs Control Documentos Nuevo - Deliver\OTB C3.2"))
+                    default=Path(r"C:\SharePoints\Unilever"))
+parser.add_argument("--control", default="OTB C3.2")
+parser.add_argument("--month", default="10. Octubre")
+parser.add_argument("--bot", default="Bot2")
 args = parser.parse_args()
 
-MONTH = args.month
 UNILEVER_PATH = args.unilever_path
-CONTROL = Path(UNILEVER_PATH).name
-BOT = "Bot2"
+CONTROL = args.control
+MONTH = args.month
+BOT = args.bot
+
 print(f"\nSe ejecuta {BOT} de control {CONTROL}...\n")
-REPORT_FOLDER = Path(UNILEVER_PATH) / MONTH / "1. Execution"
+SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
+    "IOPs Control Documentos Nuevo - Deliver" / CONTROL
+REPORT_FOLDER = SHAREPOINT_PATH / MONTH / "1. Execution"
 
 if CONTROL == "OTB C3.2":
     COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
@@ -69,7 +74,7 @@ def build_mail(cuerpo: str) -> str:
 
 
 def main():
-    month_folder = UNILEVER_PATH / MONTH
+    month_folder = SHAREPOINT_PATH / MONTH
     if not month_folder.is_dir():
         print(f"[ERROR] La carpeta del mes no existe: {month_folder}")
         sys.exit(1)

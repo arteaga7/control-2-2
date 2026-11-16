@@ -1,11 +1,21 @@
-'''app.py: Simple app to select folders and some parameters'''
+'''app.py: Simple app to select folders and some parameters, and run bots.'''
 
+import os
+import subprocess
+import sys
 from pathlib import Path
 import streamlit as st
-# import pandas as pd
 from PIL import Image
 import tkinter as tk
 from tkinter import filedialog
+from dotenv import load_dotenv
+
+if getattr(sys, "frozen", False):
+    PROJECT_DIR = Path(sys.executable).resolve().parent
+else:
+    PROJECT_DIR = Path(__file__).resolve().parent
+
+load_dotenv(PROJECT_DIR / ".env")
 
 page_title = "Capgemini-Bots"
 img_path = Path(__file__).resolve().parent
@@ -24,6 +34,9 @@ def get_root(path: str | Path, folder: str = "Unilever") -> Path | None:
     return Path(*parts[:parts.index(folder) + 1]) if folder in parts else None
 
 
+if "folder" not in st.session_state:
+    st.session_state["folder"] = None
+
 if st.button("Select Unilever SharePoint"):
     root = tk.Tk()
     root.withdraw()
@@ -37,9 +50,12 @@ if st.button("Select Unilever SharePoint"):
             st.session_state["folder"] = unilever.as_posix()
         else:
             st.error("Folder does not belong to 'Unilever SharePoint'")
+            st.session_state["folder"] = None
 
-st.write(st.session_state.get("folder", "No folder selected"))
+folder = st.session_state["folder"]
+unilever_path = Path(folder) if folder else None
 
+st.write(folder or "No folder selected")
 
 # Columns-------------------------------------------------------
 st.header("Select", divider="gray")
@@ -50,13 +66,46 @@ with col1:
     )
 with col2:
     month = st.selectbox(
-        label="Month", options=['09. Sep', '10. Oct', '11. Nov']
+        label="Month", options=['09. Septiembre', '10. Octubre', '11. Noviembre']
     )
 with col3:
     bot = st.selectbox(
         label="Bot", options=['Bot1', 'Bot2', 'Bot4', 'Bot6']
     )
 
+# Run ------------------------------------------
+st.header("Run")
+
+if st.button(f"Run {bot}"):
+    folder = st.session_state.get("folder")
+    if not folder:
+        st.error("Select the Unilever SharePoint folder first.")
+    else:
+        BASE_DIR = PROJECT_DIR
+        script = BASE_DIR / f"{bot.lower()}.py"   # bot2.py, bot4.py, ...
+
+        if not unilever_path.is_dir():
+            st.error(f"Folder not found: {unilever_path}")
+        elif not script.is_file():
+            st.error(f"Script not found: {script}")
+        else:
+            cmd = [sys.executable, str(script),
+                   "--month", month,
+                   "--unilever_path", str(unilever_path),
+                   "--bot", bot]
+            with st.spinner(f"Running {bot}..."):
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, encoding="utf-8",
+                    env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                )
+            st.code(result.stdout or "(no output)")
+            if result.returncode != 0:
+                st.error("The bot finished with errors:")
+                st.code(result.stderr)
+            else:
+                st.success(f"{bot} finished successfully.")
+
+
 # Image -----------------------------------------
-st.header("Image", divider="blue")
-st.image(img, width="stretch", caption="Image 1")
+# st.header("Image", divider="blue")
+# st.image(img, width="stretch", caption="Image 1")

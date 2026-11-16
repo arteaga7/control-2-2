@@ -69,7 +69,7 @@ def notify(mensaje_log: str, correo_html: str, control: str):
     # send_mail(correo_html, control)
 
 
-def print_mail(df: pd.DataFrame, template: str, mes: str, control: str):
+def print_mail(nota: str, df: pd.DataFrame, template: str, mes: str, control: str):
     """Print and send Dataframe with html format"""
     mail_terminal = template.replace("<br><br>", "\n").format(
         df=df.to_string(index=False), mes=mes, control=control)
