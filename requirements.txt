@@ -4,3 +4,4 @@ extract-msg
 requests
 python-dotenv
 pyinstaller
+streamlit
