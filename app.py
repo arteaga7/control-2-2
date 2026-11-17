@@ -58,6 +58,15 @@ unilever_path = Path(folder) if folder else None
 
 st.write(folder or "No folder selected")
 
+# Expander --------------------------------------
+with st.expander("Clic here to show more details about Unilever SharePoint folder", expanded=False):
+    # Image
+    st.markdown(
+        "**Note:** Unilever SharePoint is the syncronized folder for capgemini bots and it should contain the following folders:")
+    img1 = Image.open(BASE_DIR / "images" / "sharepoint.png")
+    st.image(img1, width="stretch", caption="Image 1")
+# --------------------------------------
+
 # Columns-------------------------------------------------------
 st.header("Select", divider="gray")
 col1, col2, col3 = st.columns(3)
@@ -105,8 +114,3 @@ if st.button(f"Run {bot}"):
                 st.code(result.stderr)
             else:
                 st.success(f"{bot} finished successfully.")
-
-
-# Image -----------------------------------------
-# st.header("Image", divider="blue")
-# st.image(img, width="stretch", caption="Image 1")
