@@ -1,4 +1,4 @@
-'''app.py: Simple app to select folders and some parameters, and run bots.'''
+'''app.py: Simple app to select folders and some parameters to run bots.'''
 
 import os
 import subprocess
@@ -10,18 +10,19 @@ import tkinter as tk
 from tkinter import filedialog
 from dotenv import load_dotenv
 
+# Carpeta del .exe (al compilar) o del .py (en desarrollo)
 if getattr(sys, "frozen", False):
-    PROJECT_DIR = Path(sys.executable).resolve().parent
+    EXE_DIR = Path(sys.executable).resolve().parent
 else:
-    PROJECT_DIR = Path(__file__).resolve().parent
+    EXE_DIR = Path(__file__).resolve().parent
 
-load_dotenv(PROJECT_DIR / ".env")
+load_dotenv(EXE_DIR / ".env")
 
 page_title = "Capgemini-Bots"
-img_path = Path(__file__).resolve().parent
-img_path = img_path / "images" / "unilever.png"
+BASE_DIR = Path(__file__).resolve().parent      # imágenes empaquetadas
+IMG_PATH = BASE_DIR / "images" / "unilever.png"
 
-img = Image.open(img_path)
+img = Image.open(IMG_PATH)
 st.set_page_config(page_title=page_title, layout="wide",
                    page_icon=img)
 
@@ -81,7 +82,7 @@ if st.button(f"Run {bot}"):
     if not folder:
         st.error("Select the Unilever SharePoint folder first.")
     else:
-        BASE_DIR = PROJECT_DIR
+        BASE_DIR = EXE_DIR
         script = BASE_DIR / f"{bot.lower()}.py"   # bot2.py, bot4.py, ...
 
         if not unilever_path.is_dir():

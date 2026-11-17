@@ -36,4 +36,7 @@ uv venv venv
 source venv/bin/activate
 uv pip install -r requirements.txt
 ```
-3. Run "c2_2_bot2.py".
+3. Run "app.py":
+```
+streamlit run app.py
+```

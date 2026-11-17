@@ -28,13 +28,12 @@ parser.add_argument("--control", default="OTB C3.2")
 parser.add_argument("--month", default="10. Octubre")
 parser.add_argument("--bot", default="Bot2")
 args = parser.parse_args()
-
 UNILEVER_PATH = args.unilever_path
 CONTROL = args.control
 MONTH = args.month
 BOT = args.bot
 
-print(f"\nSe ejecuta {BOT} de control {CONTROL}...\n")
+print(f"\nSe ejecuta {BOT} de control {CONTROL}.\n")
 SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
     "IOPs Control Documentos Nuevo - Deliver" / CONTROL
 REPORT_FOLDER = SHAREPOINT_PATH / MONTH / "1. Execution"
@@ -65,7 +64,7 @@ Para el mes "{mes}" del control "{control}".
 <br><br>
 Saludos.\n"""
 bot2_success = f"""{saludo}La evidencia se recibio con exito para el mes "{MONTH}" del control "{CONTROL}".<br><br>\n{despedida}"""
-nota = "\nSe envia el sig. correo...\n\n"
+nota = "\n--------------------------------\nSe envia el siguiente correo...\n--------------------------------\n"
 # ----------------------------------
 
 
@@ -116,8 +115,6 @@ def main():
 
     with log_file.open("a", encoding="utf-8") as f:
         f.write(f"{CONTROL}\t{BOT}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
-
-    print(f"\nEl {BOT} del control {CONTROL} se ejecuto exitosamente!\n")
 
 
 if __name__ == "__main__":
