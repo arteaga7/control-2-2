@@ -33,7 +33,7 @@ CONTROL = args.control
 MONTH = args.month
 BOT = args.bot
 
-print(f"\nSe ejecuta {BOT} de control {CONTROL}.\n")
+print(f"\nSe ejecuta {BOT} del control {CONTROL} para el mes {MONTH}.\n")
 SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
     "IOPs Control Documentos Nuevo - Deliver" / CONTROL
 REPORT_FOLDER = SHAREPOINT_PATH / MONTH / "1. Execution"
@@ -42,12 +42,12 @@ if CONTROL == "OTB C3.2":
     COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
     REPORT_NAME = "Monthly"
     SHEET_NAME = "Rep. Auditoria"
-else:
+elif CONTROL == "OTB C5.2":
     COLS_REPORT = ["Responsable", "Justification"]
     REPORT_NAME = "CHI"
     SHEET_NAME = "Reporte"
 
-log_file = UNILEVER_PATH / f"{CONTROL}_logs.txt"
+log_file = UNILEVER_PATH / "control_logs.txt"
 # --------Mail content ------------
 saludo = "Hola Equipo,<br><br>\n"
 despedida = "Saludos.\n"
@@ -97,14 +97,14 @@ def main():
 
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
     df_na = df[df[COLS_REPORT[0]].isna()]
-    if not df_na.empty and CONTROL == "OTB C3.2":
-        print(
-            f"Hay Responsables con valores nulos.{nota}", mising_responsibles)
+    if not df_na.empty:
+        notify(
+            f"Hay Responsables con valores nulos.{nota}", mising_responsibles, CONTROL)
         df = df[df[COLS_REPORT[0]].notna()]
 
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Enviado", mails=mailto_report)
-
+    print("\n--------------------------------")
     print("Personas responsables:\n", df[[COLS_REPORT[0], "Enviado"]], "\n")
     if df["Enviado"].all():
         notify(f"Ejecución correcta.{nota}", bot2_success, CONTROL)
