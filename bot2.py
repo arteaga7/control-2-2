@@ -75,16 +75,16 @@ def build_mail(cuerpo: str) -> str:
 def main():
     month_folder = SHAREPOINT_PATH / MONTH
     if not month_folder.is_dir():
-        print(f"[ERROR] La carpeta del mes no existe: {month_folder}")
+        print(f"❌ La carpeta del mes no existe: {month_folder}")
         sys.exit(1)
     if not REPORT_FOLDER.is_dir():
-        print(f"[ERROR] La carpeta del reporte no existe: {REPORT_FOLDER}")
+        print(f"❌ La carpeta del reporte no existe: {REPORT_FOLDER}")
         sys.exit(1)
 
     df = read_xlsx(REPORT_FOLDER, COLS_REPORT, REPORT_NAME, SHEET_NAME)
     if df.empty:
         notify(
-            f"No hay {REPORT_NAME} Report.{nota}", missing_report, CONTROL)
+            f"🚨 No hay {REPORT_NAME} Report.{nota}", missing_report, CONTROL)
         return
 
     mailto_report = read_msg(folder_path=REPORT_FOLDER, n_mails=1,
@@ -92,14 +92,14 @@ def main():
 
     if len(mailto_report) == 0:
         notify(
-            f"No hay correo de evidencia para evaluar.{nota}", missing_evidence, CONTROL)
+            f"🚨 No hay correo de evidencia para evaluar.{nota}", missing_evidence, CONTROL)
         return
 
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
     df_na = df[df[COLS_REPORT[0]].isna()]
     if not df_na.empty:
         notify(
-            f"Hay Responsables con valores nulos.{nota}", mising_responsibles, CONTROL)
+            f"⚠️ Hay Responsables con valores nulos.{nota}", mising_responsibles, CONTROL)
         df = df[df[COLS_REPORT[0]].notna()]
 
     df = compare_col_content(df=df, col=COLS_REPORT[0],
@@ -107,7 +107,7 @@ def main():
     print("\n--------------------------------")
     print("Personas responsables:\n", df[[COLS_REPORT[0], "Enviado"]], "\n")
     if df["Enviado"].all():
-        notify(f"Ejecución correcta.{nota}", bot2_success, CONTROL)
+        notify(f"✅ Ejecución correcta.{nota}", bot2_success, CONTROL)
     else:
         df_not_sent = df.loc[df["Enviado"] == False,
                              [COLS_REPORT[0], "Enviado"]]
