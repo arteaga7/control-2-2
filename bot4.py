@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 import pandas as pd
 from mod_2.report import read_xlsx, compare_col_content
 from mod_2.mail import read_msg, print_mail
-from mod_4.inbox import post_inbox, extraer_from_carpeta
+from mod_4.inbox import post_inbox, extract_from_inbox
 
 # Carpeta real del .exe (o del .py si corres en desarrollo)
 if getattr(sys, "frozen", False):
@@ -40,6 +40,7 @@ SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
 REPORT_FOLDER = SHAREPOINT_PATH / MONTH / "1. Execution"
 JUSTIFICATION_FOLDER = SHAREPOINT_PATH / MONTH / "2. Justification"
 APPOVAL_FOLDER = SHAREPOINT_PATH / MONTH / "3. Approval"
+CAPGEMINI_FOLDER_PATH = Path(UNILEVER_PATH) / "SKY_CE - emails_capgemini"
 
 if CONTROL == "OTB C3.2":
     COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
@@ -75,14 +76,13 @@ nota = "\n--------------------------------\nSe envia el siguiente correo...\n---
 retardo = 0
 
 
-def df_no_feed_not_empty(df_no_feed: pd.DataFrame):
+def df_no_feed_not_empty(df_no_feed: pd.DataFrame, last_exec_bot2: datetime):
     """This code is executed if df_no_feed is not empty."""
     # post_inbox()
-    print("Ya se actualizaron los mails")
-    # remitentes = extraer_from_carpeta(CAPGEMINI_FOLDER_PATH)
-    remitentes = ['Lorena.Espindola@unilever.com',
-                  'vignesh.k@unilever.com', 'sivakumar.buraga2@unilever.com']
-    print(remitentes)
+    remitentes = extract_from_inbox(CAPGEMINI_FOLDER_PATH, last_exec_bot2)
+    print("Se encontraron emails en inbox de los siguientes responsables:\n")
+    for i in remitentes:
+        print(i)
     df_no_feed = compare_col_content(df=df_no_feed, col=COLS_REPORT[0],
                                      new_col="Inbox", mails=remitentes)
     df_inbox = df_no_feed.loc[df_no_feed["Inbox"] == True,
@@ -90,26 +90,26 @@ def df_no_feed_not_empty(df_no_feed: pd.DataFrame):
     df_no_inbox = df_no_feed.loc[df_no_feed["Inbox"] == False,
                                  [COLS_REPORT[0], "Inbox", COLS_REPORT[2]]]
     if not df_inbox.empty:
-        print_mail(df_inbox, missing_justification_mails, MONTH, CONTROL)
+        print_mail(nota, df_inbox, missing_justification_mails, MONTH, CONTROL)
     if not df_no_inbox.empty:
-        print_mail(df_no_inbox, no_justification_mails, MONTH, CONTROL)
+        print_mail(nota, df_no_inbox, no_justification_mails, MONTH, CONTROL)
 
 
-def bot4(df: pd.DataFrame):
+def bot4(df: pd.DataFrame, last_exec_bot2: datetime):
     """Specific functions of Bot4"""
     from_justification = []
     from_justification = read_msg(folder_path=JUSTIFICATION_FOLDER,
                                   extension="*.msg", property="sender")
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Feedback", mails=from_justification)
-    print("\n--------------------------------")
-    print("Personas que respondieron (mandaron email de justificacion):")
-    print(df[[COLS_REPORT[0], "Feedback"]], "\n")
+    # print("\n--------------------------------")
+    # print("Personas que respondieron (mandaron email de justificacion):")
+    # print(df[[COLS_REPORT[0], "Feedback"]], "\n")
     # df_feed = df[df["Feedback"] == True]
     df_no_feed = df[df["Feedback"] == False]
 
     if not df_no_feed.empty:
-        df_no_feed_not_empty(df_no_feed)
+        df_no_feed_not_empty(df_no_feed, last_exec_bot2)
 
     return
 
@@ -132,8 +132,8 @@ def main():
     df_time = pd.read_csv(
         log_file, sep="\t", header=None, names=["Control", "Bot", "Fecha"], parse_dates=["Fecha"]
     )
-    last_exec = df_time.loc[df_time["Bot"] == "Bot2", "Fecha"].max()
-    if not (datetime.now() > last_exec + timedelta(days=retardo)):
+    last_exec_bot2 = df_time.loc[df_time["Bot"] == "Bot2", "Fecha"].max()
+    if not (datetime.now() > last_exec_bot2 + timedelta(days=retardo)):
         print("⚠️ El Bot2 se ejecuto recientemente (menos de 2 dias), espere 2 dias mas para ejecutar Bot4.")
         return
 
@@ -147,14 +147,17 @@ def main():
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
     df_na = df[df[COLS_REPORT[0]].isna()]
     if not df_na.empty:
-        print(f"⚠️ Hay Responsables con valores nulos. Ejecute 'Bot2' para mandar el correo correspondiente.")
+        print("⚠️ Hay Responsables con valores nulos")
     df = df[df[COLS_REPORT[0]].notna()]
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Enviado", mails=mailto_report)
-
     # Bot2 does not performe the following
-    bot4(df)
+    bot4(df, last_exec_bot2)
 
 
 if __name__ == "__main__":
     main()
+
+"""
+    
+"""
