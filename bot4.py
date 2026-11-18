@@ -13,6 +13,7 @@ import pandas as pd
 from mod_2.report import read_xlsx, compare_col_content
 from mod_2.mail import read_msg, print_mail
 from mod_4.inbox import post_inbox, extract_from_inbox
+from mod_4.approve import approve_msg
 
 # Carpeta real del .exe (o del .py si corres en desarrollo)
 if getattr(sys, "frozen", False):
@@ -76,6 +77,16 @@ nota = "\n--------------------------------\nSe envia el siguiente correo...\n---
 retardo = 0
 
 
+def approval_22_or_32(df_no_feed: pd.DataFrame, df_feed: pd.DataFrame):
+    """This code is executed if df_feed is not empty and control is 2.2 or 3.2."""
+    approved = approve_msg(APPOVAL_FOLDER)
+    if not approved:
+        print(f"Control {CONTROL} incompleto.")
+    elif df_no_feed.empty:
+        print(
+            f"Control {CONTROL} aprobado para:\n{df_feed}\nNo se ejecuta Bot6.")
+
+
 def df_no_feed_not_empty(df_no_feed: pd.DataFrame, last_exec_bot2: datetime):
     """This code is executed if df_no_feed is not empty."""
     # post_inbox()
@@ -89,6 +100,7 @@ def df_no_feed_not_empty(df_no_feed: pd.DataFrame, last_exec_bot2: datetime):
                               [COLS_REPORT[0], "Inbox"]]
     df_no_inbox = df_no_feed.loc[df_no_feed["Inbox"] == False,
                                  [COLS_REPORT[0], "Inbox", COLS_REPORT[2]]]
+
     if not df_inbox.empty:
         print_mail(nota, df_inbox, missing_justification_mails, MONTH, CONTROL)
     if not df_no_inbox.empty:
@@ -105,13 +117,14 @@ def bot4(df: pd.DataFrame, last_exec_bot2: datetime):
     # print("\n--------------------------------")
     # print("Personas que respondieron (mandaron email de justificacion):")
     # print(df[[COLS_REPORT[0], "Feedback"]], "\n")
-    # df_feed = df[df["Feedback"] == True]
+    df_feed = df[df["Feedback"] == True]
     df_no_feed = df[df["Feedback"] == False]
-
-    if not df_no_feed.empty:
-        df_no_feed_not_empty(df_no_feed, last_exec_bot2)
-
-    return
+    # if not df_no_feed.empty:
+    # df_no_feed_not_empty(df_no_feed, last_exec_bot2)
+    if not df_feed.empty and CONTROL in ["OTB C2.2", "OTB C3.2"]:
+        approval_22_or_32(df_no_feed, df_feed)
+    if not df_feed.empty and CONTROL == "OTB C5.2":
+        pass
 
 
 def main():
@@ -157,7 +170,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-"""
-    
-"""

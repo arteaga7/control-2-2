@@ -30,7 +30,7 @@ def read_xlsx(folder_path: Path, cols: list[str], name: str, sheet_name: str) ->
     if len(xlsx_name) > 0:
         xlsx_name = xlsx_name[0]
     else:
-        print(f"No se encontró ningún archivo .xlsx en {folder_path}")
+        print(f"No se encontró ningún archivo '.xlsx' en {folder_path}")
         return pd.DataFrame()
 
     return read_report(
