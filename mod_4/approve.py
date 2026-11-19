@@ -18,6 +18,9 @@ PATRONES_POSITIVOS = [
     r"\bok\b",
     r"\bconforme\b",
     r"\baprobad[oa]\s+con\s+(?:detalles|observaciones|comentarios)\b"
+    r"\baprovad[oa]s?\b",
+    r"\baprovad[oa]\s+com\s+(?:detalhes|observações|comentários|comentarios)\b"
+    r"\baceitos?\b",
 ]
 
 # Patrones negativos

@@ -53,7 +53,7 @@ elif CONTROL == "OTB C5.2":
     SHEET_NAME = "Reporte"
 
 log_file = UNILEVER_PATH / "control_logs.txt"
-
+retardo = 0
 # --------Mail content ------------
 saludo = "Hola Equipo,<br><br>"
 despedida = "<br><br>Saludos."
@@ -74,7 +74,6 @@ Por favor enviar email a sus respectivos WL2 (Line Manager).
 Saludos."""
 success_template = f"""{saludo}Control "{CONTROL}" completo para el mes "{MONTH}"{despedida}."""
 nota = "\n--------------------------------\nSe envia el siguiente correo...\n--------------------------------\n"
-retardo = 0
 
 
 def approval_22_or_32(df_no_feed: pd.DataFrame, df_feed: pd.DataFrame):
@@ -83,21 +82,22 @@ def approval_22_or_32(df_no_feed: pd.DataFrame, df_feed: pd.DataFrame):
     if approved:
         if df_no_feed.empty:
             print(
-                f"Control {CONTROL} aprobado para:\n{df_feed}\nNo se ejecuta Bot6.")
+                f"\n✅ Control {CONTROL} aprobado para:\n{df_feed}\nNo se ejecuta Bot6.")
         else:
             print(
-                f"Control {CONTROL} incompleto, faltan usuarios por responder.")
+                f"\n⚠️ Control {CONTROL} incompleto, faltan usuarios por responder.")
     else:
-        print(f"Control {CONTROL} incompleto, no hay mail de aprobacion.")
+        print(f"\n⚠️ Control {CONTROL} incompleto, no hay mail de aprobacion.")
 
 
 def df_no_feed_not_empty(df_no_feed: pd.DataFrame, last_exec_bot2: datetime):
     """This code is executed if df_no_feed is not empty."""
-    # post_inbox()
+    post_inbox()
     remitentes = extract_from_inbox(CAPGEMINI_FOLDER_PATH, last_exec_bot2)
-    print("Se encontraron emails en inbox de los siguientes responsables:\n")
-    for i in remitentes:
-        print(i)
+    if len(remitentes) > 0:
+        print("Se encontraron emails en inbox de los siguientes responsables:\n")
+        for i in remitentes:
+            print(i)
     df_no_feed = compare_col_content(df=df_no_feed, col=COLS_REPORT[0],
                                      new_col="Inbox", mails=remitentes)
     df_inbox = df_no_feed.loc[df_no_feed["Inbox"] == True,
@@ -134,10 +134,10 @@ def bot4(df: pd.DataFrame, last_exec_bot2: datetime):
 def main():
     month_folder = SHAREPOINT_PATH / MONTH
     if not month_folder.is_dir():
-        print(f"❌ La carpeta del mes no existe: {month_folder}")
+        print(f"❌ La carpeta del mes no existe: '{month_folder}'")
         sys.exit(1)
     if not REPORT_FOLDER.is_dir():
-        print(f"❌ La carpeta del reporte no existe: {REPORT_FOLDER}")
+        print(f"❌ La carpeta del reporte no existe: '{REPORT_FOLDER}'")
         sys.exit(1)
 
     df = read_xlsx(REPORT_FOLDER, COLS_REPORT, REPORT_NAME, SHEET_NAME)
@@ -147,18 +147,20 @@ def main():
         return
 
     df_time = pd.read_csv(
-        log_file, sep="\t", header=None, names=["Control", "Bot", "Fecha"], parse_dates=["Fecha"]
+        log_file, sep="\t", header=None, names=["Control", "Bot", "Mes", "Fecha"], parse_dates=["Fecha"]
     )
+    # df_time = df_time[df_time["Control", "Bot", "Mes"]]
     last_exec_bot2 = df_time.loc[df_time["Bot"] == "Bot2", "Fecha"].max()
     if not (datetime.now() > last_exec_bot2 + timedelta(days=retardo)):
-        print("⚠️ El Bot2 se ejecuto recientemente (menos de 2 dias), espere 2 dias mas para ejecutar Bot4.")
+        print(
+            f"🚨 El Bot2 se ejecuto recientemente (menos de {retardo} dias), espere {retardo} dias mas para ejecutar Bot4.")
         return
 
     mailto_report = read_msg(folder_path=REPORT_FOLDER, n_mails=1,
                              extension="*.msg", property="to")
     if len(mailto_report) == 0:
         print(
-            f"🚨 No hay evidencia en la carpeta {REPORT_FOLDER}. Ejecute 'Bot2' para mandar el correo correspondiente.")
+            f"🚨 No hay evidencia en la carpeta '{REPORT_FOLDER}'. Ejecute 'Bot2' para mandar el correo correspondiente.")
         return
 
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
@@ -170,6 +172,8 @@ def main():
                              new_col="Enviado", mails=mailto_report)
     # Bot2 does not performe the following
     bot4(df, last_exec_bot2)
+    with log_file.open("a", encoding="utf-8") as f:
+        f.write(f"{CONTROL}\t{BOT}\t{MONTH}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
 
 
 if __name__ == "__main__":

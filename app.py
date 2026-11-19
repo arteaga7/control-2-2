@@ -72,21 +72,23 @@ st.header("Select", divider="gray")
 col1, col2, col3 = st.columns(3)
 with col1:
     control = st.selectbox(
-        label="Control", options=['OTB C2.2', 'OTB C3.2', 'OTB C5.2']
+        label="Control", options=['OTB C3.2', 'OTB C5.2']
     )
 with col2:
     month = st.selectbox(
-        label="Month", options=['09. Septiembre', '10. Octubre', '11. Noviembre']
+        label="Month", options=['09. Septiembre', '10. Octubre', '11. Noviembre', '12. Diciembre']
     )
 with col3:
     bot = st.selectbox(
-        label="Bot", options=['Bot1', 'Bot2', 'Bot4', 'Bot6']
+        label="Bot", options=['Bot2', 'Bot4']
     )
 
 # Run ------------------------------------------
 st.header("Run")
 
 if st.button(f"Run {bot}"):
+    if bot == 'Bot4':
+        st.write("Verifying inbox, please wait a few seconds...\n")
     folder = st.session_state.get("folder")
     if not folder:
         st.error("Select the Unilever SharePoint folder first.")

@@ -65,7 +65,6 @@ Para el mes "{mes}" del control "{control}".
 Saludos.\n"""
 bot2_success = f"""{saludo}La evidencia se recibio con exito para el mes "{MONTH}" del control "{CONTROL}".<br><br>\n{despedida}"""
 nota = "\n--------------------------------\nSe envia el siguiente correo...\n--------------------------------\n"
-# ----------------------------------
 
 
 def build_mail(cuerpo: str) -> str:
@@ -75,10 +74,10 @@ def build_mail(cuerpo: str) -> str:
 def main():
     month_folder = SHAREPOINT_PATH / MONTH
     if not month_folder.is_dir():
-        print(f"❌ La carpeta del mes no existe: {month_folder}")
+        print(f"❌ La carpeta del mes no existe: '{month_folder}'")
         sys.exit(1)
     if not REPORT_FOLDER.is_dir():
-        print(f"❌ La carpeta del reporte no existe: {REPORT_FOLDER}")
+        print(f"❌ La carpeta del reporte no existe: '{REPORT_FOLDER}'")
         sys.exit(1)
 
     df = read_xlsx(REPORT_FOLDER, COLS_REPORT, REPORT_NAME, SHEET_NAME)
@@ -99,7 +98,7 @@ def main():
     df_na = df[df[COLS_REPORT[0]].isna()]
     if not df_na.empty:
         notify(
-            f"⚠️ Hay Responsables con valores nulos.{nota}", mising_responsibles, CONTROL)
+            f"⚠️ Hay Responsables con valores nulos.\n{nota}", mising_responsibles, CONTROL)
         df = df[df[COLS_REPORT[0]].notna()]
 
     df = compare_col_content(df=df, col=COLS_REPORT[0],
@@ -107,14 +106,15 @@ def main():
     print("\n--------------------------------")
     print("Personas responsables:\n", df[[COLS_REPORT[0], "Enviado"]], "\n")
     if df["Enviado"].all():
-        notify(f"✅ Ejecución correcta.{nota}", bot2_success, CONTROL)
+        notify(f"\n✅ Ejecución correcta.{nota}", bot2_success, CONTROL)
     else:
         df_not_sent = df.loc[df["Enviado"] == False,
                              [COLS_REPORT[0], "Enviado"]]
         print_mail(nota, df_not_sent, mismatch_sent_template, MONTH, CONTROL)
+        print("\n⚠️ Control incompleto.")
 
     with log_file.open("a", encoding="utf-8") as f:
-        f.write(f"{CONTROL}\t{BOT}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
+        f.write(f"{CONTROL}\t{BOT}\t{MONTH}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
 
 
 if __name__ == "__main__":

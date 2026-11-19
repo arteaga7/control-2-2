@@ -38,7 +38,7 @@ def extraer_from(path: str | Path, exec_date: datetime) -> str:
         exec_date = exec_date.to_pydatetime()
     exec_date = exec_date.astimezone()
     if fecha_correo <= exec_date:
-        print(f"Fecha {fecha_correo} <= exec_date({exec_date})")
+        # print(f"Fecha {fecha_correo} <= exec_date({exec_date})")
         return ""
     # --- Remitente ---
     valores = [str(v) for v in msg.get_all("From", [])]
@@ -67,20 +67,18 @@ def extract_from_inbox(folder_path: str | Path, exec_date: datetime) -> list[str
 
 def post_inbox():
     """Post API Rest to trigger PowerAutomate to check inbox"""
-    print("Checando bandeja de entrada...")
     url = os.getenv("INBOX_URL")
     if not url:
         raise RuntimeError(f"No se encontró INBOX_URL en {ENV_PATH}")
     # json= pone el Content-Type solo
     response = requests.post(url, timeout=60, verify=False)
     if response.status_code in (200, 202):
-        print("Exitoso")
+        print("Inbox checked!")
     else:
         raise Exception(
-            f"Power Automate fallo al checar la bandeja de entrada: "
+            f"Power Automate failed when checking inbox: "
             f"{response.status_code} - {response.text}"
         )
-    print("Esperamos un minuto a que se ejecute el flujo de Power Automate para revisar inbox...")
     time.sleep(60)
 
 
