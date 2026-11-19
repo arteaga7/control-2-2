@@ -80,11 +80,15 @@ retardo = 0
 def approval_22_or_32(df_no_feed: pd.DataFrame, df_feed: pd.DataFrame):
     """This code is executed if df_feed is not empty and control is 2.2 or 3.2."""
     approved = approve_msg(APPOVAL_FOLDER)
-    if not approved:
-        print(f"Control {CONTROL} incompleto.")
-    elif df_no_feed.empty:
-        print(
-            f"Control {CONTROL} aprobado para:\n{df_feed}\nNo se ejecuta Bot6.")
+    if approved:
+        if df_no_feed.empty:
+            print(
+                f"Control {CONTROL} aprobado para:\n{df_feed}\nNo se ejecuta Bot6.")
+        else:
+            print(
+                f"Control {CONTROL} incompleto, faltan usuarios por responder.")
+    else:
+        print(f"Control {CONTROL} incompleto, no hay mail de aprobacion.")
 
 
 def df_no_feed_not_empty(df_no_feed: pd.DataFrame, last_exec_bot2: datetime):
@@ -114,13 +118,13 @@ def bot4(df: pd.DataFrame, last_exec_bot2: datetime):
                                   extension="*.msg", property="sender")
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Feedback", mails=from_justification)
-    # print("\n--------------------------------")
-    # print("Personas que respondieron (mandaron email de justificacion):")
-    # print(df[[COLS_REPORT[0], "Feedback"]], "\n")
+    print("\n--------------------------------")
+    print("Personas que respondieron (mandaron email de justificacion):")
+    print(df[[COLS_REPORT[0], "Feedback"]], "\n")
     df_feed = df[df["Feedback"] == True]
     df_no_feed = df[df["Feedback"] == False]
-    # if not df_no_feed.empty:
-    # df_no_feed_not_empty(df_no_feed, last_exec_bot2)
+    if not df_no_feed.empty:
+        df_no_feed_not_empty(df_no_feed, last_exec_bot2)
     if not df_feed.empty and CONTROL in ["OTB C2.2", "OTB C3.2"]:
         approval_22_or_32(df_no_feed, df_feed)
     if not df_feed.empty and CONTROL == "OTB C5.2":
