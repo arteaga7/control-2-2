@@ -5,13 +5,18 @@ Executable:
 uv run pyinstaller --onefile --name bot2 --paths . --collect-all extract_msg bot2.py
 """
 
-import sys
-from pathlib import Path
-import argparse
-from datetime import datetime
-from dotenv import load_dotenv
-from mod_2.report import read_xlsx, compare_col_content
 from mod_2.mail import read_msg, notify, print_mail
+from mod_2.report import read_xlsx, compare_col_content
+from dotenv import load_dotenv
+from datetime import datetime
+import argparse
+from pathlib import Path
+import sys
+
+# Fuerza UTF-8 en la salida (necesario en el .exe de PyInstaller en Windows)
+for stream in (sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8", errors="replace")
 
 # Carpeta real del .exe (o del .py si corres en desarrollo)
 if getattr(sys, "frozen", False):

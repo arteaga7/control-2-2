@@ -85,7 +85,6 @@ with col3:
 
 # Run ------------------------------------------
 st.header("Run")
-
 if st.button(f"Run {bot}"):
     if bot == 'Bot4':
         st.write("Verifying inbox, please wait a few seconds...\n")
@@ -93,23 +92,27 @@ if st.button(f"Run {bot}"):
     if not folder:
         st.error("Select the Unilever SharePoint folder first.")
     else:
-        BASE_DIR = EXE_DIR
-        script = BASE_DIR / f"{bot.lower()}.py"   # bot2.py, bot4.py, ...
+        if getattr(sys, "frozen", False):          # compilado → llama bot2.exe / bot4.exe
+            script = EXE_DIR / f"{bot.lower()}.exe"
+            cmd = [str(script)]
+        else:                                      # desarrollo → python bot2.py
+            script = EXE_DIR / f"{bot.lower()}.py"
+            cmd = [sys.executable, str(script)]
 
         if not unilever_path.is_dir():
             st.error(f"Folder not found: {unilever_path}")
         elif not script.is_file():
             st.error(f"Script not found: {script}")
         else:
-            cmd = [sys.executable, str(script),
-                   "--control", control,
-                   "--month", month,
-                   "--unilever_path", str(unilever_path),
-                   "--bot", bot]
+            cmd += ["--month", month,
+                    "--control", control,
+                    "--unilever_path", str(unilever_path),
+                    "--bot", bot]
             with st.spinner(f"Running {bot}..."):
                 result = subprocess.run(
                     cmd, capture_output=True, text=True, encoding="utf-8",
                     env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
             st.code(result.stdout or "(no output)")
             if result.returncode != 0:
