@@ -32,21 +32,31 @@ UNILEVER_PATH = args.unilever_path
 CONTROL = args.control
 MONTH = args.month
 BOT = args.bot
-
 print(f"\nSe ejecuta {BOT} del control {CONTROL} para el mes {MONTH}.\n")
-SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
-    "IOPs Control Documentos Nuevo - Deliver" / CONTROL
-REPORT_FOLDER = SHAREPOINT_PATH / MONTH / "1. Execution"
 
 if CONTROL == "OTB C3.2":
+    SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
+        "Evidence GCH - Documents" / "2. Non SOX" / \
+        "2026" / "OTC" / "Order Fulfilment" / "OTB C3.2"
     COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
     REPORT_NAME = "Monthly"
     SHEET_NAME = "Rep. Auditoria"
 elif CONTROL == "OTB C5.2":
+    SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
+        "Evidence GCH - Documents" / "1. SOX" / "2026" / \
+        "OTC" / "Customer Billing" / "OTB C5.2"
     COLS_REPORT = ["Responsable", "Justification"]
     REPORT_NAME = "CHI"
     SHEET_NAME = "Reporte"
+else:
+    SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
+        "Evidence GCH - Documents" / "2. Non SOX" / \
+        "2026" / "OTC" / "Order Management" / "OTB C2.2"
+    COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
+    REPORT_NAME = "Monthly"
+    SHEET_NAME = "Rep. Auditoria"
 
+REPORT_FOLDER = SHAREPOINT_PATH / MONTH / "1. Execution"
 log_file = UNILEVER_PATH / "control_logs.txt"
 # --------Mail content ------------
 saludo = "Hola Equipo,<br><br>\n"
@@ -71,20 +81,20 @@ def build_mail(cuerpo: str) -> str:
     return f"Hola Equipo,<br><br>\n{cuerpo}<br><br>\nSaludos.\n"
 
 
-def main():
+def main() -> bool:
     month_folder = SHAREPOINT_PATH / MONTH
     if not month_folder.is_dir():
         print(f"❌ La carpeta del mes no existe: '{month_folder}'")
-        sys.exit(1)
+        return False
     if not REPORT_FOLDER.is_dir():
         print(f"❌ La carpeta del reporte no existe: '{REPORT_FOLDER}'")
-        sys.exit(1)
+        return False
 
     df = read_xlsx(REPORT_FOLDER, COLS_REPORT, REPORT_NAME, SHEET_NAME)
     if df.empty:
         notify(
             f"🚨 No hay {REPORT_NAME} Report.{nota}", missing_report, CONTROL)
-        return
+        return False
 
     mailto_report = read_msg(folder_path=REPORT_FOLDER, n_mails=1,
                              extension="*.msg", property="to")
@@ -92,7 +102,7 @@ def main():
     if len(mailto_report) == 0:
         notify(
             f"🚨 No hay correo de evidencia para evaluar.{nota}", missing_evidence, CONTROL)
-        return
+        return False
 
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
     df_na = df[df[COLS_REPORT[0]].isna()]
@@ -103,7 +113,7 @@ def main():
 
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Enviado", mails=mailto_report)
-    print("\n--------------------------------")
+    print("--------------------------------")
     print("Personas responsables:\n", df[[COLS_REPORT[0], "Enviado"]], "\n")
     if df["Enviado"].all():
         notify(f"\n✅ Ejecución correcta.{nota}", bot2_success, CONTROL)
@@ -111,11 +121,12 @@ def main():
         df_not_sent = df.loc[df["Enviado"] == False,
                              [COLS_REPORT[0], "Enviado"]]
         print_mail(nota, df_not_sent, mismatch_sent_template, MONTH, CONTROL)
-        print("\n⚠️ Control incompleto.")
-
-    with log_file.open("a", encoding="utf-8") as f:
-        f.write(f"{CONTROL}\t{BOT}\t{MONTH}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
+        print("\n⚠️  Control incompleto.")
+    return True
 
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    with log_file.open("a", encoding="utf-8") as f:
+        f.write(
+            f"{CONTROL}\t{BOT}\t{MONTH}\t{datetime.now():%Y-%m-%d %H:%M:%S}\t{success}\n")

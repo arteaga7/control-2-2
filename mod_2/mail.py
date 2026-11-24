@@ -66,7 +66,7 @@ def send_mail(body_mail: str, control: str) -> None:
 def notify(mensaje_log: str, correo_html: str, control: str):
     """Imprime un mensaje de log y envía el correo correspondiente."""
     print(mensaje_log + correo_html.replace("<br><br>", "\n"))
-    # send_mail(correo_html, control)
+    send_mail(correo_html, control)
 
 
 def print_mail(nota: str, df: pd.DataFrame, template: str, mes: str, control: str):
@@ -76,4 +76,4 @@ def print_mail(nota: str, df: pd.DataFrame, template: str, mes: str, control: st
     print(f"{nota}{mail_terminal}")
     mail = template.format(
         df=df.to_html(index=False), mes=mes, control=control)
-    # send_mail(mail, control)
+    send_mail(mail, control)

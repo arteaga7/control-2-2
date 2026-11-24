@@ -36,24 +36,35 @@ MONTH = args.month
 BOT = args.bot
 
 print(f"\nSe ejecuta {BOT} del control {CONTROL} para el mes {MONTH}.\n")
-SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
-    "IOPs Control Documentos Nuevo - Deliver" / CONTROL
-REPORT_FOLDER = SHAREPOINT_PATH / MONTH / "1. Execution"
-JUSTIFICATION_FOLDER = SHAREPOINT_PATH / MONTH / "2. Justification"
-APPOVAL_FOLDER = SHAREPOINT_PATH / MONTH / "3. Approval"
-CAPGEMINI_FOLDER_PATH = Path(UNILEVER_PATH) / "SKY_CE - emails_capgemini"
 
 if CONTROL == "OTB C3.2":
+    SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
+        "Evidence GCH - Documents" / "2. Non SOX" / \
+        "2026" / "OTC" / "Order Fulfilment" / "OTB C3.2"
     COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
     REPORT_NAME = "Monthly"
     SHEET_NAME = "Rep. Auditoria"
 elif CONTROL == "OTB C5.2":
+    SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
+        "Evidence GCH - Documents" / "1. SOX" / "2026" / \
+        "OTC" / "Customer Billing" / "OTB C5.2"
     COLS_REPORT = ["Responsable", "Justification"]
     REPORT_NAME = "CHI"
     SHEET_NAME = "Reporte"
+else:
+    SHAREPOINT_PATH = Path(UNILEVER_PATH) / \
+        "Evidence GCH - Documents" / "2. Non SOX" / \
+        "2026" / "OTC" / "Order Management" / "OTB C2.2"
+    COLS_REPORT = ["Reponsible", "Approver", "Line Manager", "Director"]
+    REPORT_NAME = "Monthly"
+    SHEET_NAME = "Rep. Auditoria"
 
+REPORT_FOLDER = SHAREPOINT_PATH / MONTH / "1. Execution"
+JUSTIFICATION_FOLDER = SHAREPOINT_PATH / MONTH / "2. Justification"
+APPOVAL_FOLDER = SHAREPOINT_PATH / MONTH / "3. Approval"
+CAPGEMINI_FOLDER_PATH = Path(UNILEVER_PATH) / "SKY_CE - emails_capgemini"
 log_file = UNILEVER_PATH / "control_logs.txt"
-retardo = 0
+retardo = 5
 # --------Mail content ------------
 saludo = "Hola Equipo,<br><br>"
 despedida = "<br><br>Saludos."
@@ -92,7 +103,7 @@ def approval_22_or_32(df_no_feed: pd.DataFrame, df_feed: pd.DataFrame):
 
 def df_no_feed_not_empty(df_no_feed: pd.DataFrame, last_exec_bot2: datetime):
     """This code is executed if df_no_feed is not empty."""
-    post_inbox()
+    # post_inbox()
     remitentes = extract_from_inbox(CAPGEMINI_FOLDER_PATH, last_exec_bot2)
     if len(remitentes) > 0:
         print("Se encontraron emails en inbox de los siguientes responsables:\n")
@@ -118,7 +129,7 @@ def bot4(df: pd.DataFrame, last_exec_bot2: datetime):
                                   extension="*.msg", property="sender")
     df = compare_col_content(df=df, col=COLS_REPORT[0],
                              new_col="Feedback", mails=from_justification)
-    print("\n--------------------------------")
+    print("--------------------------------")
     print("Personas que respondieron (mandaron email de justificacion):")
     print(df[[COLS_REPORT[0], "Feedback"]], "\n")
     df_feed = df[df["Feedback"] == True]
@@ -135,33 +146,37 @@ def main():
     month_folder = SHAREPOINT_PATH / MONTH
     if not month_folder.is_dir():
         print(f"❌ La carpeta del mes no existe: '{month_folder}'")
-        sys.exit(1)
+        return False
     if not REPORT_FOLDER.is_dir():
         print(f"❌ La carpeta del reporte no existe: '{REPORT_FOLDER}'")
-        sys.exit(1)
+        return False
 
     df = read_xlsx(REPORT_FOLDER, COLS_REPORT, REPORT_NAME, SHEET_NAME)
     if df.empty:
         print(f"🚨 No hay {REPORT_NAME} Report. Ejecute 'Bot2' para mandar correo correspondiente " +
               "o si hizo modificaciones recientemente, espere unos minutos y vuelva a intentar.")
-        return
+        return False
 
     df_time = pd.read_csv(
-        log_file, sep="\t", header=None, names=["Control", "Bot", "Mes", "Fecha"], parse_dates=["Fecha"]
+        log_file, sep="\t", header=None, names=["Control", "Bot", "Mes", "Fecha", "Exito"], parse_dates=["Fecha"]
     )
-    # df_time = df_time[df_time["Control", "Bot", "Mes"]]
+    df_time = df_time[(df_time["Control"] == CONTROL) &
+                      (df_time["Mes"] == MONTH) &
+                      (df_time["Exito"] == True)]
     last_exec_bot2 = df_time.loc[df_time["Bot"] == "Bot2", "Fecha"].max()
-    if not (datetime.now() > last_exec_bot2 + timedelta(days=retardo)):
+    print(
+        f"El Bot2 del control '{CONTROL}' se ejecuto correctamente el {last_exec_bot2}.")
+    if not (datetime.now() > last_exec_bot2 + timedelta(minutes=retardo)):
         print(
-            f"🚨 El Bot2 se ejecuto recientemente (menos de {retardo} dias), espere {retardo} dias mas para ejecutar Bot4.")
-        return
+            f"🚨 El Bot2 se ejecuto recientemente (menos de {retardo} minutes), espere {retardo} minutes mas para ejecutar Bot4.")
+        return False
 
     mailto_report = read_msg(folder_path=REPORT_FOLDER, n_mails=1,
                              extension="*.msg", property="to")
     if len(mailto_report) == 0:
         print(
             f"🚨 No hay evidencia en la carpeta '{REPORT_FOLDER}'. Ejecute 'Bot2' para mandar el correo correspondiente.")
-        return
+        return False
 
     df = df.drop_duplicates(subset=[COLS_REPORT[0]])
     df_na = df[df[COLS_REPORT[0]].isna()]
@@ -172,9 +187,11 @@ def main():
                              new_col="Enviado", mails=mailto_report)
     # Bot2 does not performe the following
     bot4(df, last_exec_bot2)
-    with log_file.open("a", encoding="utf-8") as f:
-        f.write(f"{CONTROL}\t{BOT}\t{MONTH}\t{datetime.now():%Y-%m-%d %H:%M:%S}\n")
+    return True
 
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    with log_file.open("a", encoding="utf-8") as f:
+        f.write(
+            f"{CONTROL}\t{BOT}\t{MONTH}\t{datetime.now():%Y-%m-%d %H:%M:%S}\t{success}\n")

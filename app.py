@@ -72,11 +72,11 @@ st.header("Select", divider="gray")
 col1, col2, col3 = st.columns(3)
 with col1:
     control = st.selectbox(
-        label="Control", options=['OTB C3.2', 'OTB C5.2']
+        label="Control", options=['OTB C3.2', 'OTB C5.2', 'OTB C2.2']
     )
 with col2:
     month = st.selectbox(
-        label="Month", options=['09. Septiembre', '10. Octubre', '11. Noviembre', '12. Diciembre']
+        label="Month", options=['7. Julio', '8. Agosto', '9. Septiembre', '10. Octubre']
     )
 with col3:
     bot = st.selectbox(
@@ -102,6 +102,7 @@ if st.button(f"Run {bot}"):
             st.error(f"Script not found: {script}")
         else:
             cmd = [sys.executable, str(script),
+                   "--control", control,
                    "--month", month,
                    "--unilever_path", str(unilever_path),
                    "--bot", bot]
